@@ -41,7 +41,9 @@ Mesh::Mesh(aiMesh* const meshData) : mesh(meshData) {
         for (int j = 0; j < mesh->mFaces[i].mNumIndices; j++) 
             indices.emplace_back(mesh->mFaces[i].mIndices[j]);
     }
-    
+
+    indices.shrink_to_fit();
+
     for (auto vertex : vertices) vertex.normal = normalize(vertex.normal);
     
     glGenVertexArrays(1, &VAO);
