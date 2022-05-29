@@ -28,7 +28,7 @@ Shader* defaultShader = nullptr;
 Shader* particleShader = nullptr;
 
 float particleMass = 1.0f;
-float springConstant = 1.0f;
+float springConstant = 10.0f;
 
 
 double deltaTime = 0.0;

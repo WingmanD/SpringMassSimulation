@@ -5,13 +5,14 @@
 
 RigidBodyCollisionForce::RigidBodyCollisionForce(glm::vec3 position, glm::vec3 direction) {
     this->position = position;
-    this->direction = glm::normalize(direction);
+    this->direction = normalize(direction);
     D = -dot(direction, position);
 }
 
 void RigidBodyCollisionForce::apply(std::vector<Particle*> particles) {
     for (auto particle : particles) {
         float distance = dot(particle->position, direction) + D;
+
         if (distance < 0.001f) {
             float forceProjectionMagnitude = glm::dot(particle->force, -direction);
             particle->force += direction * forceProjectionMagnitude;
@@ -19,6 +20,7 @@ void RigidBodyCollisionForce::apply(std::vector<Particle*> particles) {
             float velocityProjectionMagnitude = glm::dot(particle->velocity, -direction);
             particle->velocity += direction * velocityProjectionMagnitude;
         }
+       if (distance < 0) { particle->position += direction * -distance; particle->velocity = glm::vec3(0); }
     }
 }
 

@@ -16,15 +16,24 @@ void SoftObject::tick(double deltaTime) {
     Object::tick(deltaTime);
 
 
-    for (auto particle : particles) particle->applyPhysics(deltaTime);
+    /*for (auto particle : particles) particle->calculateSpringForces();
 
-    /*for (const auto value : particles)
-        std::cout << "force: " << value->force.x << " " << value->force.y << " " << value->
+    for (const auto value : particles)
+        std::cout << "springForce: " << value->force.x << " " << value->force.y << " " << value->
             force.z << std::endl;*/
-
     
+for (auto particle : particles) particle->applyPhysics(deltaTime);
 
     for (const auto envForce : *environmentForces) envForce->apply(particles);
+    /*for (const auto value : particles)
+        std::cout << "envForces: " << value->force.x << " " << value->force.y << " " << value->
+            force.z << std::endl;*/
+
+    for (int i = 0; i < mesh->vertices.size(); ++i) {
+        mesh->vertices[i].position = particles[i]->position;
+    }
+
+    
 }
 
 void SoftObject::drawParticles(Camera* camera) const {
@@ -53,14 +62,27 @@ void SoftObject::setupParticles() {
     for (const auto& vertex : mesh->vertices)
         flatParticles.emplace_back(
             Particle(vertex.position, particleMass, springConstant));
-
     for (auto& flatParticle : flatParticles)
         particles.emplace_back(&flatParticle);
-
-    for (int i = 0; i < particles.size(); i++)
+    for (int i = 0; i < particles.size() - 1; i++)
         for (const auto connected : mesh->vertices[i].connected)
             particles[i]->
                 addConnected(particles[connected->index]);
+
+    glm::vec3 center = glm::vec3(0.0f);
+    for (auto particle : flatParticles) center += particle.position;
+    center /= flatParticles.size();
+
+    flatParticles.emplace_back(Particle(center, particleMass, springConstant));
+
+    auto centerParticle = &flatParticles.back();
+
+    for (auto particle : particles) {
+        particle->addInnerConnected(centerParticle);
+        centerParticle->addConnected(particle);
+    }
+
+    particles.emplace_back(centerParticle);
 
 
     /*for (const auto& flat_particle : flatParticles)
@@ -70,7 +92,6 @@ void SoftObject::setupParticles() {
         std::cout << "pointer particles " << particle->position.x << " " << particle->
                                                                             position.y << " " << particle->position.z <<
             std::endl;*/
-    // tick(0.8);
 }
 
 void SoftObject::initParticleBuffer() {

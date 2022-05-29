@@ -4,6 +4,7 @@
 
 class Particle {
     std::map<Particle*, float> initialDistancesToConnected;
+    std::map<Particle*, float> initialDistancesToInnerConnected;
 public:
     float mass;
     float k;
@@ -16,12 +17,12 @@ public:
     Particle(glm::vec3 position, float mass, float springConstant);
 
     void addConnected(Particle* connected);
+    void addInnerConnected(Particle* innerConnected);
 
     void applyPhysics(float deltaTime);
 
-
-private:
-    void calculateForce();
+    void calculateSpringForces();
 
     void applyForce(float deltaTime);
+    
 };
