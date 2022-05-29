@@ -80,6 +80,7 @@ public:
         return out;
     }
 
+    /*
     static bool isVoxelOverlappingObject(Object* obj, glm::vec3 voxelCenter, float voxelSize) {
         const glm::vec3 voxelPivot = voxelCenter - glm::vec3(voxelSize * sqrt(3.0f) / 2.0f);
         for (int i = 0; i < 8; i++) {
@@ -166,7 +167,7 @@ public:
         std::cout << "t: " << t << std::endl;
         std::cout << "nominator: " << glm::dot(n, rayOrigin) + D << std::endl;
         std::cout << "origin: " << rayOrigin.x << " " << rayOrigin.y << " " << rayOrigin.z << std::endl;
-        std::cout << "direction: " << rayDirection.x << " " << rayDirection.y << " " << rayDirection.z << std::endl;*/
+        std::cout << "direction: " << rayDirection.x << " " << rayDirection.y << " " << rayDirection.z << std::endl;#1#
 
 
         glm::vec3 p = intersection - v0;
@@ -177,7 +178,7 @@ public:
 
         /*std::cout << "t1: " << t1 << std::endl;
         std::cout << "t2: " << t2 << std::endl;
-        std::cout << "t3: " << t3 << std::endl;*/
+        std::cout << "t3: " << t3 << std::endl;#1#
 
         if (t1 >= 0 && t2 >= 0 && t3 >= 0 && t1 <= 1 && t2 <= 1 && t3 <= 1) {
             //std::cout << "intersection inside triangle" << std::endl;
@@ -188,6 +189,7 @@ public:
         return result;
 
     }
+    */
 
     static glm::vec3 aiVector3DToVec3(aiVector3D vec) { return glm::vec3(vec.x, vec.y, vec.z); }
 

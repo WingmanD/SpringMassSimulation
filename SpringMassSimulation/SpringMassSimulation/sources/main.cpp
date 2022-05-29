@@ -20,17 +20,15 @@
 int width = 1280;
 int height = 720;
 
-
 bool bWireframeMode = false;
 bool bShowParticles = true;
 bool bShowBoundingBoxes = false;
 
-GLint projectionUniformLocation = -1;
-GLint viewUniformLocation = -1;
-GLint modelUniformLocation = -1;
-
 Shader* defaultShader = nullptr;
 Shader* particleShader = nullptr;
+
+float particleMass = 1.0f;
+float springConstant = 1.0f;
 
 
 double deltaTime = 0.0;
@@ -170,8 +168,8 @@ int main(int argc, char* argv[]) {
     scene = new Scene();
     scene->load(path, defaultShader);
 
-    scene->addForce(new GravityForce(glm::vec3(0, 0, -9.8)));
-    scene->addForce(new RigidBodyCollisionForce({0, 0, 0}, {0, 0, 1}));
+    scene->addForce(new GravityForce(glm::vec3(0, -9.8, 0)));
+    scene->addForce(new RigidBodyCollisionForce({0, 0, 0}, {0, 1, 0}));
 
     renderer = new Renderer(scene, camera);
 

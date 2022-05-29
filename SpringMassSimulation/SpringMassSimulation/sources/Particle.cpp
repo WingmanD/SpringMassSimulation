@@ -7,8 +7,8 @@
 Particle::Particle(glm::vec3 position, float mass, float springConstant): mass(mass), k(springConstant),
                                                                           position(position) {}
 
-void Particle::addNeighbour(Particle* neighbour) {
-    initialDistancesToNeighbours.emplace(neighbour, distance(position, neighbour->position));
+void Particle::addConnected(Particle* connected) {
+    initialDistancesToConnected.emplace(connected, distance(position, connected->position));
 }
 
 void Particle::applyPhysics(float deltaTime) {
@@ -17,10 +17,10 @@ void Particle::applyPhysics(float deltaTime) {
 }
 
 void Particle::calculateForce() {
-    for (auto initDistNeighbour : initialDistancesToNeighbours) {
+    for (auto initDistNeighbour : initialDistancesToConnected) {
         float deltaX = initDistNeighbour.second - distance(position, initDistNeighbour.first->position);
         // Fs = k * deltaX where k is spring constant and deltaX is the difference between the initial distance and the current distance as vector
-        glm::vec3 springForce = k * deltaX * position - initDistNeighbour.first->position;
+        glm::vec3 springForce = k * deltaX * (position - initDistNeighbour.first->position);
         force += springForce;
     }
 }

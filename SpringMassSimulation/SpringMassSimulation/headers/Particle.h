@@ -3,7 +3,7 @@
 #include <glm/vec3.hpp>
 
 class Particle {
-    std::map<Particle*, float> initialDistancesToNeighbours;
+    std::map<Particle*, float> initialDistancesToConnected;
 public:
     float mass;
     float k;
@@ -15,7 +15,7 @@ public:
 
     Particle(glm::vec3 position, float mass, float springConstant);
 
-    void addNeighbour(Particle* neighbour);
+    void addConnected(Particle* connected);
 
     void applyPhysics(float deltaTime);
 

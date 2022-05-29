@@ -1,14 +1,18 @@
 #include "Mesh.h"
 
+#include <iostream>
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/gtx/vector_angle.hpp>
 
 #include "Globals.h"
 
 Mesh::Mesh(aiMesh* const meshData) : mesh(meshData) {
-    vertexNormals = std::vector<glm::vec3>(mesh->mNumVertices);
-    indices = std::vector<unsigned int>(mesh->mNumFaces * 3);
-
+    indices.reserve(meshData->mNumFaces * 3);
+    vertices.reserve(mesh->mNumVertices);
+    
+    for (int i = 0; i < mesh->mNumVertices; i++)
+        vertices.emplace_back(i, mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z);
+    
     for (int i = 0; i < mesh->mNumFaces; i++) {
         glm::vec3 normal = glm::vec3(0);
         aiVector3D e1, e2;
@@ -16,29 +20,30 @@ Mesh::Mesh(aiMesh* const meshData) : mesh(meshData) {
         e1 = mesh->mVertices[mesh->mFaces[i].mIndices[1]] - mesh->mVertices[mesh->mFaces[i].mIndices[0]];
         e2 = mesh->mVertices[mesh->mFaces[i].mIndices[2]] - mesh->mVertices[mesh->mFaces[i].mIndices[0]];
 
+        Vertex* v0 = &vertices[mesh->mFaces[i].mIndices[0]];
+        Vertex* v1 = &vertices[mesh->mFaces[i].mIndices[1]];
+        Vertex* v2 = &vertices[mesh->mFaces[i].mIndices[2]];
+
+        v0->addConnected(v1);
+        v0->addConnected(v2);
+        v1->addConnected(v2);
+      
         glm::vec3 edge1 = glm::vec3(e1.x, e1.y, e1.z);
         glm::vec3 edge2 = glm::vec3(e2.x, e2.y, e2.z);
 
-        normal = glm::cross(edge1, edge2);
-        normal = glm::normalize(normal);
+        normal = cross(edge1, edge2);
+        normal = normalize(normal);
 
-        vertexNormals[mesh->mFaces[i].mIndices[0]] += normal;
-        vertexNormals[mesh->mFaces[i].mIndices[1]] += normal;
-        vertexNormals[mesh->mFaces[i].mIndices[2]] += normal;
+        vertices[mesh->mFaces[i].mIndices[0]].normal += normal;
+        vertices[mesh->mFaces[i].mIndices[1]].normal += normal;
+        vertices[mesh->mFaces[i].mIndices[2]].normal += normal;
 
-        for (int j = 0; j < mesh->mFaces[i].mNumIndices; j++)
+        for (int j = 0; j < mesh->mFaces[i].mNumIndices; j++) 
             indices.emplace_back(mesh->mFaces[i].mIndices[j]);
     }
-
-    for (int i = 0; i < vertexNormals.size(); i++)
-        vertexNormals[i] = glm::normalize(vertexNormals[i]);
-
-    std::vector<aiColor4D> colors;
-    if (!mesh->HasVertexColors(0)) {
-        for (int i = 0; i < mesh->mNumVertices; i++) { colors.emplace_back(aiColor4D(0.5f, 0.5f, 0.5f, 1.0f)); }
-    }
-
-
+    
+    for (auto vertex : vertices) vertex.normal = normalize(vertex.normal);
+    
     glGenVertexArrays(1, &VAO);
     glGenBuffers(3, VBO);
     glGenBuffers(1, &EBO);
@@ -46,20 +51,16 @@ Mesh::Mesh(aiMesh* const meshData) : mesh(meshData) {
     glBindVertexArray(VAO);
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO[0]);
-    glBufferData(GL_ARRAY_BUFFER, mesh->mNumVertices * sizeof(aiVector3D), mesh->mVertices, GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), vertices.data(), GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<void*>(offsetof(Vertex, position)));
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO[1]);
-
-    if (!mesh->HasVertexColors(0))
-        glBufferData(GL_ARRAY_BUFFER, mesh->mNumVertices * sizeof(aiColor4D), &colors.front(), GL_STATIC_DRAW);
-    else
-        glBufferData(GL_ARRAY_BUFFER, mesh->mNumVertices * sizeof(aiColor4D), mesh->mColors[0], GL_STATIC_DRAW);
-    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, 0);
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), vertices.data(), GL_STATIC_DRAW);
+    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<void*>(offsetof(Vertex, colour)));
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO[2]);
-    glBufferData(GL_ARRAY_BUFFER, vertexNormals.size() * sizeof(glm::vec3), &vertexNormals.front(), GL_STATIC_DRAW);
-    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, 0);
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), vertices.data(), GL_STATIC_DRAW);
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<void*>(offsetof(Vertex, normal)));
 
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);

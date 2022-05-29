@@ -9,9 +9,8 @@ extern bool bWireframeMode;
 extern bool bShowParticles;
 extern bool bShowBoundingBoxes;
 
-extern GLint projectionUniformLocation;
-extern GLint viewUniformLocation;
-extern GLint modelUniformLocation;
-
 extern Shader* defaultShader;
 extern Shader* particleShader;
+
+extern float particleMass;
+extern float springConstant;

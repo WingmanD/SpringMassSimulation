@@ -10,11 +10,16 @@
 class SoftObject : public Object {
     GLuint VAO_particles = -1;
     GLuint VBO_particles = -1;
+    
     std::vector<Particle*> particles{};
+    std::vector<Particle> flatParticles{};
     
 public:
     SoftObject(Mesh* const mesh, Shader* const shader, std::vector<Force*>* environmentForces)
-        : Object(mesh, shader, environmentForces) { initParticles(); }
+        : Object(mesh, shader, environmentForces) {
+        setupParticles();
+        initParticleBuffer();
+    }
 
     void draw(Camera* camera, Transform instanceTransform, bool selected) override;
 
@@ -22,12 +27,16 @@ public:
 
     ~SoftObject() override {
         Object::~Object();
+        
         glDeleteVertexArrays(1, &VAO_particles);
         glDeleteBuffers(1, &VBO_particles);
+        
+        delete[] particles.data();
     }
 
 private:
-    void initParticles();
-    void drawParticles(Camera* camera);
+    void setupParticles();
+    void initParticleBuffer();
+    void drawParticles(Camera* camera) const;
 
 };
