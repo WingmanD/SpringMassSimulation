@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include <glad/glad.h>
+#include <glm/geometric.hpp>
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 #include <glm/vec4.hpp>
@@ -41,16 +42,29 @@ struct Vertex {
     }
 };
 
+struct Triangle {
+    Vertex* v1;
+    Vertex* v2;
+    Vertex* v3;
+
+    Triangle(Vertex* v1, Vertex* v2, Vertex* v3) {
+        this->v1 = v1;
+        this->v2 = v2;
+        this->v3 = v3;
+    }
+
+    glm::vec3 getNormal() const { return normalize(cross(v2->position - v1->position, v3->position - v1->position)); }
+};
+
 
 class Mesh : public Transform {
-    aiMesh* mesh;
-
-    GLuint VAO;
-    GLuint VBO[3];
-    GLuint EBO;
+    GLuint VAO{};
+    GLuint VBO[3]{};
+    GLuint EBO{};
 public:
     std::vector<unsigned int> indices;
     std::vector<Vertex> vertices;
+    std::vector<Triangle> triangles;
 
     Mesh(aiMesh* meshData);
 
@@ -58,7 +72,6 @@ public:
 
     void applyTransform(Camera* camera, Transform instanceTransform, Shader* shader) const;
 
-    [[nodiscard]] aiMesh* getMesh() const { return mesh; }
     [[nodiscard]] std::vector<unsigned> getIndices() const { return indices; }
     [[nodiscard]] GLuint getVAO() const { return VAO; }
     [[nodiscard]] GLuint getEBO() const { return EBO; }

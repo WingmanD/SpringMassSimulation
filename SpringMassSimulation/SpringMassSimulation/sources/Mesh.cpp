@@ -6,15 +6,16 @@
 
 #include "Globals.h"
 
-Mesh::Mesh(aiMesh* const meshData) : mesh(meshData) {
-    indices.reserve(meshData->mNumFaces * 3);
+Mesh::Mesh(aiMesh* const mesh)  {
+    indices.reserve(mesh->mNumFaces * 3);
     vertices.reserve(mesh->mNumVertices);
+    triangles.reserve(mesh->mNumFaces);
     
     for (int i = 0; i < mesh->mNumVertices; i++)
         vertices.emplace_back(i, mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z);
     
     for (int i = 0; i < mesh->mNumFaces; i++) {
-        glm::vec3 normal = glm::vec3(0);
+        auto normal = glm::vec3(0);
         aiVector3D e1, e2;
 
         e1 = mesh->mVertices[mesh->mFaces[i].mIndices[1]] - mesh->mVertices[mesh->mFaces[i].mIndices[0]];
@@ -24,6 +25,9 @@ Mesh::Mesh(aiMesh* const meshData) : mesh(meshData) {
         Vertex* v1 = &vertices[mesh->mFaces[i].mIndices[1]];
         Vertex* v2 = &vertices[mesh->mFaces[i].mIndices[2]];
 
+        Triangle t(v0, v1, v2);
+        triangles.emplace_back(t);
+        
         v0->addConnected(v1);
         v0->addConnected(v2);
         v1->addConnected(v2);
@@ -76,24 +80,20 @@ Mesh::Mesh(aiMesh* const meshData) : mesh(meshData) {
 
 }
 
-//TODO translate bounding box to origin and rotate and scale it and translate back
 BoundingBox Mesh::getBoundingBox() const {
     glm::vec3 min, max;
-    min = max = glm::vec3(mesh->mVertices[0].x, mesh->mVertices[0].y, mesh->mVertices[0].z);
-
-    for (int i = 0; i < mesh->mNumVertices; i++) {
-        if (mesh->mVertices[i].x < min.x) { min.x = mesh->mVertices[i].x; }
-        if (mesh->mVertices[i].y < min.y) { min.y = mesh->mVertices[i].y; }
-        if (mesh->mVertices[i].z < min.z) { min.z = mesh->mVertices[i].z; }
-
-        if (mesh->mVertices[i].x > max.x) { max.x = mesh->mVertices[i].x; }
-        if (mesh->mVertices[i].y > max.y) { max.y = mesh->mVertices[i].y; }
-        if (mesh->mVertices[i].z > max.z) { max.z = mesh->mVertices[i].z; }
+    min = max = vertices[0].position;
+    
+    for (auto vertex : vertices) {
+        if (vertex.position.x < min.x) { min.x = vertex.position.x; }
+        if (vertex.position.y < min.y) { min.y = vertex.position.y; }
+        if (vertex.position.z < min.z) { min.z = vertex.position.z; }
+        
+        if (vertex.position.x > max.x) { max.x = vertex.position.x; }
+        if (vertex.position.y > max.y) { max.y = vertex.position.y; }
+        if (vertex.position.z > max.z) { max.z = vertex.position.z; }
     }
-
-    min = min * Scale;
-    max = max * Scale;
-
+    
     return {min, max};
 }
 

@@ -8,12 +8,12 @@
 #include "Shader.h"
 
 class SoftObject : public Object {
-    GLuint VAO_particles = -1;
-    GLuint VBO_particles = -1;
-    
+    GLuint VAO_particles{};
+    GLuint VBO_particles{};
+
     std::vector<Particle*> particles{};
     std::vector<Particle> flatParticles{};
-    
+
 public:
     SoftObject(Mesh* const mesh, Shader* const shader, std::vector<Force*>* environmentForces)
         : Object(mesh, shader, environmentForces) {
@@ -26,14 +26,14 @@ public:
     void tick(double deltaTime) override;
 
     void appliedTranslate(glm::vec3 newLocation);
-    
+
 
     ~SoftObject() override {
         Object::~Object();
-        
+
         glDeleteVertexArrays(1, &VAO_particles);
         glDeleteBuffers(1, &VBO_particles);
-        
+
         delete[] particles.data();
     }
 

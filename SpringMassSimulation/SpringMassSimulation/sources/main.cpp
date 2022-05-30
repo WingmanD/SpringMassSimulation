@@ -113,9 +113,6 @@ void mouse_callback(GLFWwindow* window, double x, double y) {
     activeCamera->rotate(glm::vec3(0, yoffset, xoffset));
 }
 
-
-void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {}
-
 int main(int argc, char* argv[]) {
     GLFWwindow* window;
 
@@ -135,19 +132,20 @@ int main(int argc, char* argv[]) {
     }
     glfwMakeContextCurrent(window);
 
-    glfwSetInputMode(window, GLFW_CURSOR, cursorCaptured ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
-
-    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-    glfwSetKeyCallback(window, key_callback);
-    glfwSetCursorPosCallback(window, mouse_callback);
-    glfwSetScrollCallback(window, scroll_callback);
 
     if (!gladLoadGLLoader(reinterpret_cast<GLADloadproc>(glfwGetProcAddress))) {
         std::cerr << "Failed to initialize GLAD" << std::endl;
         return 1;
     }
 
+    glfwSetInputMode(window, GLFW_CURSOR, cursorCaptured ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
+
+    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+    glfwSetKeyCallback(window, key_callback);
+    glfwSetCursorPosCallback(window, mouse_callback);
+
     std::cout << "OpenGL " << glGetString(GL_VERSION) << std::endl;
+    
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO();
@@ -163,8 +161,6 @@ int main(int argc, char* argv[]) {
     glPolygonMode(GL_FRONT_AND_BACK, bWireframeMode ? GL_LINE : GL_FILL);
 
     glfwSwapInterval(0);
-
-    Assimp::Importer importer;
 
     const std::filesystem::path p = "..\\Debug\\resources\\plane\\plane.obj";
     std::string path = std::filesystem::absolute(p).string();
@@ -202,7 +198,8 @@ int main(int argc, char* argv[]) {
         ImGui::NewFrame();
 
         ImGui::Begin("Settings", nullptr, flags);
-        ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0 / static_cast<double>(ImGui::GetIO().Framerate),
+        ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
+                    1000.0 / static_cast<double>(ImGui::GetIO().Framerate),
                     static_cast<double>(ImGui::GetIO().Framerate));
         ImGui::SliderFloat("Spring constant", &springConstant, 0.0f, 1000.0f);
         ImGui::SliderFloat("Internal spring constant", &internalSpringConstant, 0.0f, 1000.0f);

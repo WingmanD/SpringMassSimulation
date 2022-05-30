@@ -9,6 +9,7 @@
 
 void SoftObject::draw(Camera* camera, Transform instanceTransform, bool selected) {
     Object::draw(camera, instanceTransform, selected);
+    // todo move this to renderer because of depth test
     if (bShowParticles) drawParticles(camera);
 }
 

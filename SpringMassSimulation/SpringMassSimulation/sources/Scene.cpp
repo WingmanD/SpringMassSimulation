@@ -28,6 +28,7 @@ void Scene::load(std::string path, Shader* shader) {
     for (unsigned int i = 0; i < scene->mNumMeshes; i++) {
         objects.emplace_back(new Object(new Mesh(scene->mMeshes[i]), shader, &environmentForces));
     }
+
 }
 
 void Scene::loadSoft(std::string path, Shader* shader) {
@@ -53,7 +54,7 @@ void Scene::loadSoft(std::string path, Shader* shader) {
         newObject->appliedTranslate(activeCamera->Location + activeCamera->getFront() * 10.0f);
         objects.emplace_back(newObject);
     }
-
+    
 }
 
 void Scene::addObject(Object* object) { objects.emplace_back(object); }
