@@ -1,12 +1,8 @@
 ﻿#include "Particle.h"
 
-#include <iostream>
-#include <glm/detail/func_geometric.inl>
+#include <glm/ext/quaternion_geometric.hpp>
 
 #include "forces/Force.h"
-
-Particle::Particle(glm::vec3 position, float mass, float springConstant): mass(mass), k(springConstant),
-                                                                          position(position) {}
 
 void Particle::addConnected(Particle* connected) {
     initialDistancesToConnected.emplace(connected, distance(position, connected->position));
@@ -16,29 +12,42 @@ void Particle::addInnerConnected(Particle* innerConnected) {
     initialDistancesToInnerConnected.emplace(innerConnected, distance(position, innerConnected->position));
 }
 
+
 void Particle::applyPhysics(float deltaTime) {
     calculateSpringForces();
+    calculateInternalPressureForce();
+    calculateDampingForces();
     applyForce(deltaTime);
 }
 
-void Particle::calculateSpringForces() {
+inline void Particle::calculateSpringForces() {
     for (auto initDistConnected : initialDistancesToConnected) {
         float deltaX = initDistConnected.second - distance(position, initDistConnected.first->position);
-        // Fs = k * deltaX where k is spring constant and deltaX is the difference between the initial distance and the current distance as vector
-        glm::vec3 springForce = k * deltaX * normalize(position - initDistConnected.first->position);
+        // Fs = k * deltaX * 0.5 where k is spring constant and deltaX is the difference between the initial distance and the current distance as vector
+        glm::vec3 springForce = *k * deltaX * normalize(position - initDistConnected.first->position) * 0.5f;
         force += springForce;
     }
 
-    
     for (auto initDistInnerConnected : initialDistancesToInnerConnected) {
         float deltaX = initDistInnerConnected.second - distance(position, initDistInnerConnected.first->position);
-        // Fs = k * deltaX where k is spring constant and deltaX is the difference between the initial distance and the current distance as vector
-        //todo make this a global constant
-        glm::vec3 springForce = 1000.0f * k * deltaX * normalize(position - initDistInnerConnected.first->position);
+        // Fs = k * deltaX * 0.5 where k is spring constant and deltaX is the difference between the initial distance and the current distance as vector
+        glm::vec3 springForce = *k_inner * deltaX * normalize(position - initDistInnerConnected.first->position) * 0.5f;
         force += springForce;
     }
-    
 }
+
+inline void Particle::calculateInternalPressureForce() {
+    //todo maybe just multiply normal with distance from center
+    if (initialDistancesToInnerConnected.size() > 0) {
+        Particle* center = (*initialDistancesToInnerConnected.begin()).first;
+        if (length(position - center->position) > (*initialDistancesToInnerConnected.begin()).second)
+            force += *internalPressureConstant * initialNormal * (*initialDistancesToInnerConnected.begin()).second;
+    }
+
+}
+
+inline void Particle::calculateDampingForces() { force -= *c * velocity; }
+
 
 void Particle::applyForce(float deltaTime) {
     // F = m * a

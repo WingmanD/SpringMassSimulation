@@ -15,6 +15,9 @@
 #include "Util.h"
 #include "forces/GravityForce.h"
 #include "forces/RigidBodyCollisionForce.h"
+#include "imgui/imgui.h"
+#include "imgui/imgui_impl_glfw.h"
+#include "imgui/imgui_impl_opengl3.h"
 
 
 int width = 1280;
@@ -29,12 +32,17 @@ Shader* particleShader = nullptr;
 
 float particleMass = 1.0f;
 float springConstant = 10.0f;
+float internalSpringConstant = 100.f;
+float damping = 0.5f;
+float internalPressureForceConstant = 0.1f;
 
+glm::vec3 gravity = {0.0f, -9.8f, 0.0f};
 
 double deltaTime = 0.0;
 double lastFrame = 0.0;
 
 bool cameraControls = true;
+bool cursorCaptured = true;
 
 Renderer* renderer;
 Scene* scene;
@@ -63,7 +71,10 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
         glPolygonMode(GL_FRONT_AND_BACK, bWireframeMode ? GL_LINE : GL_FILL);
     }
     if (key == GLFW_KEY_O && action == GLFW_PRESS) scene->loadSoft(Util::chooseOBJ());
-
+    if (key == GLFW_KEY_LEFT_CONTROL && action == GLFW_PRESS) {
+        cursorCaptured = !cursorCaptured;
+        glfwSetInputMode(window, GLFW_CURSOR, cursorCaptured ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
+    }
 }
 
 void processInput(GLFWwindow* window) {
@@ -71,25 +82,17 @@ void processInput(GLFWwindow* window) {
     auto speed = static_cast<float>(2.5 * deltaTime);
     if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT)) speed *= 5.0f;
 
-    //if (cameraControls) {
     if (glfwGetKey(window, GLFW_KEY_W)) activeCamera->move(activeCamera->getFront() * speed);
     if (glfwGetKey(window, GLFW_KEY_S)) activeCamera->move(-activeCamera->getFront() * speed);
     if (glfwGetKey(window, GLFW_KEY_A)) activeCamera->move(-activeCamera->getRight() * speed);
     if (glfwGetKey(window, GLFW_KEY_D)) activeCamera->move(activeCamera->getRight() * speed);
     if (glfwGetKey(window, GLFW_KEY_Q)) activeCamera->move(activeCamera->getViewUp() * speed);
     if (glfwGetKey(window, GLFW_KEY_E)) activeCamera->move(-activeCamera->getViewUp() * speed);
-    /*}
-    else {
-        if (glfwGetKey(window, GLFW_KEY_W)) activeInstance->move(-glm::vec3(0, 0, 1) * speed);
-        if (glfwGetKey(window, GLFW_KEY_S)) activeInstance->move(glm::vec3(0, 0, 1) * speed);
-        if (glfwGetKey(window, GLFW_KEY_A)) activeInstance->move(-glm::vec3(1, 0, 0) * speed);
-        if (glfwGetKey(window, GLFW_KEY_D)) activeInstance->move(glm::vec3(1, 0, 0) * speed);
-        if (glfwGetKey(window, GLFW_KEY_Q)) activeInstance->move(glm::vec3(0, 1, 0) * speed);
-        if (glfwGetKey(window, GLFW_KEY_E)) activeInstance->move(-glm::vec3(0, 1, 0) * speed);
-    }*/
 }
 
 void mouse_callback(GLFWwindow* window, double x, double y) {
+
+
     if (firstMouse) {
         lastX = x;
         lastY = y;
@@ -102,10 +105,13 @@ void mouse_callback(GLFWwindow* window, double x, double y) {
     lastX = x;
     lastY = y;
 
+    if (!cursorCaptured) return;
+
     constexpr double sensitivity = 0.005;
     xoffset *= sensitivity;
     yoffset *= sensitivity;
 
+    //todo when cursor is not capured, camera can flip after we capture it
     activeCamera->rotate(glm::vec3(0, yoffset, xoffset));
 }
 
@@ -131,7 +137,7 @@ int main(int argc, char* argv[]) {
     }
     glfwMakeContextCurrent(window);
 
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwSetInputMode(window, GLFW_CURSOR, cursorCaptured ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
 
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     glfwSetKeyCallback(window, key_callback);
@@ -144,6 +150,12 @@ int main(int argc, char* argv[]) {
     }
 
     std::cout << "OpenGL " << glGetString(GL_VERSION) << std::endl;
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO();
+    (void)io;
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    ImGui_ImplOpenGL3_Init("#version 460");
 
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
@@ -168,7 +180,7 @@ int main(int argc, char* argv[]) {
     scene = new Scene();
     scene->load(path, defaultShader);
 
-    scene->addForce(new GravityForce(glm::vec3(0, -9.8, 0)));
+    scene->addForce(new GravityForce(&gravity));
     scene->addForce(new RigidBodyCollisionForce({0, 0, 0}, {0, 1, 0}));
 
     renderer = new Renderer(scene, camera);
@@ -183,10 +195,33 @@ int main(int argc, char* argv[]) {
         scene->tick(deltaTime);
         renderer->render();
 
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+
+        ImGui::Begin("Settings");
+        ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate,
+                    ImGui::GetIO().Framerate);
+        ImGui::SliderFloat("Spring constant", &springConstant, 0.0f, 1000.0f);
+        ImGui::SliderFloat("Internal spring constant", &internalSpringConstant, 0.0f, 1000.0f);
+        ImGui::SliderFloat("Damping", &damping, 0.0f, 10.0f);
+        ImGui::SliderFloat("Internal pressure force constant", &internalPressureForceConstant, 0.0f, 10.0f);
+
+        ImGui::SliderFloat3("Gravity", &gravity[0], -10.0f, 10.0f);
+        ImGui::End();
+
+        ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+
         glfwSwapBuffers(window);
         glfwPollEvents();
         processInput(window);
     }
+
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
 
     delete renderer;
     //todo this causes crash

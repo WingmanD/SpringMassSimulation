@@ -10,6 +10,8 @@
 void Scene::tick(double deltaTime) { for (auto& object : objects) { object->tick(deltaTime); } }
 
 void Scene::load(std::string path, Shader* shader) {
+    if (path.empty()) return;
+    
     Assimp::Importer importer;
 
     std::cout << "Loading scene: " << path << std::endl;
@@ -29,6 +31,8 @@ void Scene::load(std::string path, Shader* shader) {
 }
 
 void Scene::loadSoft(std::string path, Shader* shader) {
+    if (path.empty()) return;
+    
     Assimp::Importer importer;
 
     std::cout << "Loading soft scene: " << path << std::endl;

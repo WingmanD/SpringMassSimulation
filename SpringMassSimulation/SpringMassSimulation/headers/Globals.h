@@ -14,3 +14,6 @@ extern Shader* particleShader;
 
 extern float particleMass;
 extern float springConstant;
+extern float internalSpringConstant;
+extern float damping;
+extern float internalPressureForceConstant;

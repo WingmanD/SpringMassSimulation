@@ -12,11 +12,11 @@ Camera::Camera(glm::vec3 eyeLocation, glm::vec3 center) {
     this->height_ = height;
 
     front = center - eyeLocation;
-    focalDistance = glm::length(front);
+    focalDistance = length(front);
 
-    front = glm::normalize(front);
-    right = glm::normalize(glm::cross(front, worldUp));
-    viewUp = glm::normalize(glm::cross(right, front));
+    front = normalize(front);
+    right = normalize(cross(front, worldUp));
+    viewUp = normalize(cross(right, front));
 }
 
 void Camera::rotate(glm::vec3 rot) {
@@ -39,9 +39,9 @@ void Camera::rotate(glm::vec3 rot) {
 }
 
 glm::mat4 Camera::getViewMatrix() {
-    right = glm::normalize(glm::cross(front, viewUp));
-    viewUp = glm::normalize(glm::cross(right, front));
-    glm::mat4 view = glm::lookAt(Location, Location + front, viewUp);
+    right = normalize(cross(front, viewUp));
+    viewUp = normalize(cross(right, front));
+    glm::mat4 view = lookAt(Location, Location + front, viewUp);
 
     return view;
 }
