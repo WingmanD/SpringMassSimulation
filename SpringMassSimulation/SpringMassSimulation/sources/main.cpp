@@ -31,12 +31,10 @@ Shader* defaultShader = nullptr;
 Shader* particleShader = nullptr;
 
 float particleMass = 1.0f;
-float springConstant = 10.0f;
-float internalSpringConstant = 100.f;
-float damping = 0.5f;
-float internalPressureForceConstant = 0.1f;
-
-glm::vec3 gravity = {0.0f, -9.8f, 0.0f};
+float springConstant = 200.0f;
+float internalSpringConstant = 300.f;
+float damping = 5.0f;
+float internalPressureForceConstant = 5.0f;
 
 double deltaTime = 0.0;
 double lastFrame = 0.0;
@@ -91,8 +89,6 @@ void processInput(GLFWwindow* window) {
 }
 
 void mouse_callback(GLFWwindow* window, double x, double y) {
-
-
     if (firstMouse) {
         lastX = x;
         lastY = y;
@@ -180,10 +176,13 @@ int main(int argc, char* argv[]) {
     scene = new Scene();
     scene->load(path, defaultShader);
 
-    scene->addForce(new GravityForce(&gravity));
+    auto gravityForce = new GravityForce(glm::vec3(0, -9.8, 0));
+    scene->addForce(gravityForce);
     scene->addForce(new RigidBodyCollisionForce({0, 0, 0}, {0, 1, 0}));
 
     renderer = new Renderer(scene, camera);
+
+    ImGuiWindowFlags flags = ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoBackground;
 
     while (glfwWindowShouldClose(window) == false) {
         double currentFrame = glfwGetTime();
@@ -199,7 +198,7 @@ int main(int argc, char* argv[]) {
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
-        ImGui::Begin("Settings");
+        ImGui::Begin("Settings", nullptr, flags);
         ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate,
                     ImGui::GetIO().Framerate);
         ImGui::SliderFloat("Spring constant", &springConstant, 0.0f, 1000.0f);
@@ -207,7 +206,7 @@ int main(int argc, char* argv[]) {
         ImGui::SliderFloat("Damping", &damping, 0.0f, 10.0f);
         ImGui::SliderFloat("Internal pressure force constant", &internalPressureForceConstant, 0.0f, 10.0f);
 
-        ImGui::SliderFloat3("Gravity", &gravity[0], -10.0f, 10.0f);
+        ImGui::SliderFloat3("Gravity", &gravityForce->gforce[0], -10.0f, 10.0f);
         ImGui::End();
 
         ImGui::Render();

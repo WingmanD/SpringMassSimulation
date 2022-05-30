@@ -37,11 +37,13 @@ inline void Particle::calculateSpringForces() {
 }
 
 inline void Particle::calculateInternalPressureForce() {
-    //todo maybe just multiply normal with distance from center
-    if (initialDistancesToInnerConnected.size() > 0) {
+    //todo we need to rotate normals
+    if (!initialDistancesToInnerConnected.empty() && length(force)>0.1f) {
         Particle* center = (*initialDistancesToInnerConnected.begin()).first;
-        if (length(position - center->position) > (*initialDistancesToInnerConnected.begin()).second)
-            force += *internalPressureConstant * initialNormal * (*initialDistancesToInnerConnected.begin()).second;
+        const float currentDistance = distance(position, center->position);
+        const float initialDistance = (*initialDistancesToInnerConnected.begin()).second;
+        
+       force += *internalPressureConstant * initialNormal * (initialDistance / currentDistance) * initialDistance;
     }
 
 }
@@ -55,6 +57,8 @@ void Particle::applyForce(float deltaTime) {
     glm::vec3 acceleration = force / mass;
     // v = v0 + a * t
     velocity += acceleration * deltaTime;
+    if(glm::length(velocity)>10.0f)
+        velocity = glm::normalize(velocity) * 10.0f;
 
     // x = x0 + v * t
     position += velocity * deltaTime;
