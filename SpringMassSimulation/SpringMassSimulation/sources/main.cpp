@@ -26,6 +26,7 @@ int height = 720;
 bool bWireframeMode = false;
 bool bShowParticles = true;
 bool bShowBoundingBoxes = false;
+bool bPaused = false;
 
 Shader* defaultShader = nullptr;
 Shader* particleShader = nullptr;
@@ -69,6 +70,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
         glPolygonMode(GL_FRONT_AND_BACK, bWireframeMode ? GL_LINE : GL_FILL);
     }
     if (key == GLFW_KEY_O && action == GLFW_PRESS) scene->loadSoft(Util::chooseOBJ());
+    if (key == GLFW_KEY_P && action == GLFW_PRESS) bPaused = !bPaused;
     if (key == GLFW_KEY_LEFT_CONTROL && action == GLFW_PRESS) {
         cursorCaptured = !cursorCaptured;
         glfwSetInputMode(window, GLFW_CURSOR, cursorCaptured ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
@@ -174,6 +176,7 @@ int main(int argc, char* argv[]) {
     activeCamera = camera;
 
     scene = new Scene();
+    scene->activeCamera = activeCamera;
     scene->load(path, defaultShader);
 
     auto gravityForce = new GravityForce(glm::vec3(0, -9.8, 0));
@@ -191,7 +194,7 @@ int main(int argc, char* argv[]) {
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        scene->tick(deltaTime);
+        if (!bPaused) scene->tick(deltaTime);
         renderer->render();
 
         ImGui_ImplOpenGL3_NewFrame();
@@ -199,14 +202,26 @@ int main(int argc, char* argv[]) {
         ImGui::NewFrame();
 
         ImGui::Begin("Settings", nullptr, flags);
-        ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate,
-                    ImGui::GetIO().Framerate);
+        ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0 / static_cast<double>(ImGui::GetIO().Framerate),
+                    static_cast<double>(ImGui::GetIO().Framerate));
         ImGui::SliderFloat("Spring constant", &springConstant, 0.0f, 1000.0f);
         ImGui::SliderFloat("Internal spring constant", &internalSpringConstant, 0.0f, 1000.0f);
         ImGui::SliderFloat("Damping", &damping, 0.0f, 10.0f);
         ImGui::SliderFloat("Internal pressure force constant", &internalPressureForceConstant, 0.0f, 10.0f);
 
         ImGui::SliderFloat3("Gravity", &gravityForce->gforce[0], -10.0f, 10.0f);
+
+        if (ImGui::Button("Toggle Wireframe")) {
+            bWireframeMode = !bWireframeMode;
+            glPolygonMode(GL_FRONT_AND_BACK, bWireframeMode ? GL_LINE : GL_FILL);
+        }
+
+        if (ImGui::Button("Toggle Show Particles"))
+            bShowParticles = !bShowParticles;
+
+        if (ImGui::Button("Play/Pause"))
+            bPaused = !bPaused;
+
         ImGui::End();
 
         ImGui::Render();

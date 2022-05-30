@@ -9,6 +9,7 @@ class Scene {
 public:
     std::vector<Object*> objects;
     std::vector<Force*> environmentForces;
+    Camera* activeCamera;
 
     Scene() = default;
 

@@ -25,6 +25,9 @@ public:
 
     void tick(double deltaTime) override;
 
+    void appliedTranslate(glm::vec3 newLocation);
+    
+
     ~SoftObject() override {
         Object::~Object();
         

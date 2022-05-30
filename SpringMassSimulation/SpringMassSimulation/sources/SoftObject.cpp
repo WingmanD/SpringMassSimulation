@@ -9,7 +9,7 @@
 
 void SoftObject::draw(Camera* camera, Transform instanceTransform, bool selected) {
     Object::draw(camera, instanceTransform, selected);
-    drawParticles(camera);
+    if (bShowParticles) drawParticles(camera);
 }
 
 void SoftObject::tick(double deltaTime) {
@@ -32,6 +32,17 @@ void SoftObject::tick(double deltaTime) {
     for (int i = 0; i < mesh->vertices.size(); ++i) { mesh->vertices[i].position = particles[i]->position; }
 
 
+}
+
+void SoftObject::appliedTranslate(glm::vec3 newLocation) {
+    glm::vec3 center = glm::vec3(0);
+    for (auto& vertex : mesh->vertices) center += vertex.position;
+    center /= mesh->vertices.size();
+
+    const glm::vec3 offset = newLocation - center;
+
+    for (auto& vertex : mesh->vertices) vertex.position += offset;
+    for (auto particle : particles) particle->position += offset;
 }
 
 void SoftObject::drawParticles(Camera* camera) const {

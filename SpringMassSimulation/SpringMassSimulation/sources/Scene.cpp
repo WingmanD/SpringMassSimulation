@@ -11,7 +11,7 @@ void Scene::tick(double deltaTime) { for (auto& object : objects) { object->tick
 
 void Scene::load(std::string path, Shader* shader) {
     if (path.empty()) return;
-    
+
     Assimp::Importer importer;
 
     std::cout << "Loading scene: " << path << std::endl;
@@ -25,14 +25,14 @@ void Scene::load(std::string path, Shader* shader) {
     if (!scene)
         std::cerr << importer.GetErrorString();
 
-    for (int i = 0; i < scene->mNumMeshes; i++) {
+    for (unsigned int i = 0; i < scene->mNumMeshes; i++) {
         objects.emplace_back(new Object(new Mesh(scene->mMeshes[i]), shader, &environmentForces));
     }
 }
 
 void Scene::loadSoft(std::string path, Shader* shader) {
     if (path.empty()) return;
-    
+
     Assimp::Importer importer;
 
     std::cout << "Loading soft scene: " << path << std::endl;
@@ -47,8 +47,13 @@ void Scene::loadSoft(std::string path, Shader* shader) {
         std::cerr << importer.GetErrorString();
 
 
-    for (int i = 0; i < scene->mNumMeshes; i++)
-        objects.emplace_back(new SoftObject(new Mesh(scene->mMeshes[i]), shader, &environmentForces));
+    for (unsigned int i = 0; i < scene->mNumMeshes; i++) {
+        auto newObject = new SoftObject(new Mesh(scene->mMeshes[i]), shader, &environmentForces);
+
+        newObject->appliedTranslate(activeCamera->Location + activeCamera->getFront() * 10.0f);
+        objects.emplace_back(newObject);
+    }
+
 }
 
 void Scene::addObject(Object* object) { objects.emplace_back(object); }
