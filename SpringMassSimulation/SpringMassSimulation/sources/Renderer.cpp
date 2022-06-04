@@ -8,4 +8,7 @@ Renderer::Renderer(Scene* scene, Camera* camera) {
     this->camera = camera;
 }
 
-void Renderer::render() { for (auto object : scene->objects) object->draw(camera); }
+void Renderer::render() const {
+    for (const auto object : scene->objects) object->drawFirstPass(camera, scene->lights);
+    for (const auto object : scene->objects) object->drawSecondPass(camera, scene->lights);
+}

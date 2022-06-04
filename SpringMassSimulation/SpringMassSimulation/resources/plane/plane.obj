@@ -1,6 +1,5 @@
 # Blender 3.1.0
 # www.blender.org
-mtllib plane.mtl
 o Plane
 v -1500.000000 0.000000 1500.000000
 v 1500.000000 0.000000 1500.000000

@@ -20,7 +20,10 @@ void RigidBodyCollisionForce::apply(std::vector<Particle*> particles) {
             float velocityProjectionMagnitude = glm::dot(particle->velocity, -direction);
             particle->velocity += direction * velocityProjectionMagnitude;
         }
-       if (distance < 0) { particle->position += direction * -distance; particle->velocity = glm::vec3(0); }
+        if (distance < 0) {
+            particle->position += direction * -distance;
+            particle->velocity = glm::vec3(0);
+        }
     }
 }
 

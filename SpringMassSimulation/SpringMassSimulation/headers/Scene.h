@@ -8,17 +8,19 @@
 class Scene {
 public:
     std::vector<Object*> objects;
+    std::vector<DirectionalLight*> lights;
     std::vector<Force*> environmentForces;
     Camera* activeCamera;
 
-    Scene() = default;
+    Scene(Camera* camera) : activeCamera(camera) {}
 
     void tick(double deltaTime);
 
-    void load(std::string path, Shader* shader = defaultShader);
-    void loadSoft(std::string path, Shader* shader = defaultShader);
+    Object* load(std::string path, Shader* shader = defaultShader, bool bLoadMaterials = true);
+    Object* loadSoft(std::string path, Shader* shader = defaultShader, bool bLoadMaterials = true);
 
     void addObject(Object* object);
+    void addLight(DirectionalLight* light);
     void addForce(Force* force);
 
     ~Scene();

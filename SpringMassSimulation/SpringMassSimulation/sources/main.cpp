@@ -69,7 +69,10 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
         bWireframeMode = !bWireframeMode;
         glPolygonMode(GL_FRONT_AND_BACK, bWireframeMode ? GL_LINE : GL_FILL);
     }
-    if (key == GLFW_KEY_O && action == GLFW_PRESS) scene->loadSoft(Util::chooseOBJ());
+    if (key == GLFW_KEY_O && action == GLFW_PRESS) {
+        scene->loadSoft(Util::chooseOBJ());
+        lastFrame = glfwGetTime();
+    }
     if (key == GLFW_KEY_P && action == GLFW_PRESS) bPaused = !bPaused;
     if (key == GLFW_KEY_LEFT_CONTROL && action == GLFW_PRESS) {
         cursorCaptured = !cursorCaptured;
@@ -97,14 +100,16 @@ void mouse_callback(GLFWwindow* window, double x, double y) {
         firstMouse = false;
     }
 
+    
+
     double xoffset = x - lastX;
     double yoffset = lastY - y;
 
     lastX = x;
     lastY = y;
 
-    if (!cursorCaptured) return;
-
+if (!cursorCaptured) return;
+    
     constexpr double sensitivity = 0.005;
     xoffset *= sensitivity;
     yoffset *= sensitivity;
@@ -145,10 +150,10 @@ int main(int argc, char* argv[]) {
     glfwSetCursorPosCallback(window, mouse_callback);
 
     std::cout << "OpenGL " << glGetString(GL_VERSION) << std::endl;
-    
+
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO();
+    const ImGuiIO& io = ImGui::GetIO();
     (void)io;
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 460");
@@ -160,31 +165,42 @@ int main(int argc, char* argv[]) {
 
     glPolygonMode(GL_FRONT_AND_BACK, bWireframeMode ? GL_LINE : GL_FILL);
 
+    glEnable(GL_PROGRAM_POINT_SIZE);
+    glEnable(GL_POINT_SMOOTH);
+
     glfwSwapInterval(0);
 
-    const std::filesystem::path p = "..\\Debug\\resources\\plane\\plane.obj";
+    std::filesystem::path p = R"(..\Debug\resources\plane\plane.obj)";
     std::string path = std::filesystem::absolute(p).string();
 
-    defaultShader = Util::loadShader(std::string(argv[0]), "shader");
+    defaultShader = Util::loadShader(std::string(argv[0]), "flatShading");
     particleShader = Util::loadShader(std::string(argv[0]), "particleShader");
 
-    Camera* camera = new Camera(glm::vec3(3, 4, 1), glm::vec3(0, 0, 0));
+    const auto camera = new Camera(glm::vec3(3, 4, 1), glm::vec3(0, 0, 0));
     activeCamera = camera;
 
-    scene = new Scene();
-    scene->activeCamera = activeCamera;
-    scene->load(path, defaultShader);
+    scene = new Scene(activeCamera);
+    scene->load(path, defaultShader, false);
 
-    auto gravityForce = new GravityForce(glm::vec3(0, -9.8, 0));
+    p = R"(..\Debug\resources\cube\cube_up.obj)";
+    path = std::filesystem::absolute(p).string();
+    const auto colliderCube = scene->load(path, defaultShader, false);
+    colliderCube->material->setDiffuse({0.5f, 0.0f, 0.0f});
+
+    scene->objects[0]->bHasCollision = false;
+
+    scene->addLight(new DirectionalLight({-1, -1, -1}, {1, 1, 1}, 1));
+
+    const auto gravityForce = new GravityForce(glm::vec3(0, -9.8, 0));
     scene->addForce(gravityForce);
     scene->addForce(new RigidBodyCollisionForce({0, 0, 0}, {0, 1, 0}));
 
     renderer = new Renderer(scene, camera);
 
-    ImGuiWindowFlags flags = ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoBackground;
+    constexpr ImGuiWindowFlags flags = ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoBackground;
 
     while (glfwWindowShouldClose(window) == false) {
-        double currentFrame = glfwGetTime();
+        const double currentFrame = glfwGetTime();
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
 
@@ -201,10 +217,12 @@ int main(int argc, char* argv[]) {
         ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
                     1000.0 / static_cast<double>(ImGui::GetIO().Framerate),
                     static_cast<double>(ImGui::GetIO().Framerate));
+        ImGui::Text("CTRL to release cursor");
+        ImGui::Text("O to import .obj mesh");
         ImGui::SliderFloat("Spring constant", &springConstant, 0.0f, 1000.0f);
         ImGui::SliderFloat("Internal spring constant", &internalSpringConstant, 0.0f, 1000.0f);
         ImGui::SliderFloat("Damping", &damping, 0.0f, 10.0f);
-        ImGui::SliderFloat("Internal pressure force constant", &internalPressureForceConstant, 0.0f, 10.0f);
+        ImGui::SliderFloat("Internal pressure force constant", &internalPressureForceConstant, 0.0f, 100.0f);
 
         ImGui::SliderFloat3("Gravity", &gravityForce->gforce[0], -10.0f, 10.0f);
 
@@ -235,8 +253,6 @@ int main(int argc, char* argv[]) {
     ImGui::DestroyContext();
 
     delete renderer;
-    //todo this causes crash
-    //delete scene;
 
     glfwTerminate();
 
