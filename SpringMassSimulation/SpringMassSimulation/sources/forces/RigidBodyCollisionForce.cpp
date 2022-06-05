@@ -14,10 +14,10 @@ void RigidBodyCollisionForce::apply(std::vector<Particle*> particles) {
         float distance = dot(particle->position, direction) + D;
 
         if (distance < 0.001f) {
-            float forceProjectionMagnitude = glm::dot(particle->force, -direction);
+            float forceProjectionMagnitude = dot(particle->force, -direction);
             particle->force += direction * forceProjectionMagnitude;
 
-            float velocityProjectionMagnitude = glm::dot(particle->velocity, -direction);
+            float velocityProjectionMagnitude = dot(particle->velocity, -direction);
             particle->velocity += direction * velocityProjectionMagnitude;
         }
         if (distance < 0) {

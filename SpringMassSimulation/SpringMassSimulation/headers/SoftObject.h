@@ -22,8 +22,6 @@ public:
     SoftObject(Mesh* const mesh, Material* material, Shader* const shader, std::vector<Object*>* objects,
                std::vector<Force*>* environmentForces)
         : Object(mesh, material, shader, environmentForces), otherObjectsInScene(objects) {
-        /*particles = std::vector<Particle*>(mesh->vertices.size() + 1);
-        flatParticles = std::vector<Particle>(mesh->vertices.size() + 1);*/
 
         setupParticles();
         initParticleBuffer();
@@ -39,7 +37,6 @@ public:
     void tick(double deltaTime) override;
 
     void appliedTranslate(glm::vec3 newLocation);
-
 
     ~SoftObject() override {
         Object::~Object();

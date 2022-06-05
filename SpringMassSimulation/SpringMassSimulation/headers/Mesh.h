@@ -89,6 +89,10 @@ public:
     [[nodiscard]] GLuint getEBO() const { return EBO; }
     [[nodiscard]] std::vector<glm::vec3> calculateNormals() const;
 
+    glm::vec3 getCenter();
+    float calculateVolume();
+    float calculateSurfaceArea();
+
     ~Mesh() {
         glDeleteBuffers(3, VBO);
         glDeleteBuffers(1, &EBO);

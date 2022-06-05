@@ -1,7 +1,7 @@
 #pragma once
 #include "Force.h"
 
-class RigidBodyCollisionForce : public Force{
+class RigidBodyCollisionForce : public Force {
     glm::vec3 position;
     glm::vec3 direction;
     float D;

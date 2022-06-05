@@ -4,6 +4,9 @@
 
 #include "forces/Force.h"
 
+#define R 8.314f
+#define T 298.15f
+
 void Particle::addConnected(Particle* connected) {
     initialDistancesToConnected->emplace_back(connected, distance(position, connected->position));
 }
@@ -35,13 +38,9 @@ inline void Particle::calculateSpringForces() {
 }
 
 inline void Particle::calculateInternalPressureForce() {
-    if (!initialDistancesToInnerConnected->empty() && length(force) > 0.1f) {
-        const Particle* center = (*initialDistancesToInnerConnected->begin()).first;
-        const float currentDistance = distance(position, center->position);
-        const float initialDistance = (*initialDistancesToInnerConnected->begin()).second;
-
-        force += *internalPressureConstant * normal * (initialDistance / currentDistance) * initialDistance;
-    }
+    // Fp = normal * SnRT / V
+    force += normal * parentMesh->calculateSurfaceArea() * *internalPressureConstant * R * T / parentMesh->
+        calculateVolume();
 }
 
 inline void Particle::calculateDampingForces() { force -= *c * velocity; }

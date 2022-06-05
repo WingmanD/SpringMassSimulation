@@ -5,6 +5,7 @@
 #include <glm/gtx/vector_angle.hpp>
 
 #include "Globals.h"
+#include "Util.h"
 
 Mesh::Mesh(aiMesh* const mesh) {
     indices.reserve(mesh->mNumFaces * 3);
@@ -150,4 +151,26 @@ std::vector<glm::vec3> Mesh::calculateNormals() const {
     for (auto& normal : normals) normal = normalize(normal);
 
     return normals;
+}
+
+glm::vec3 Mesh::getCenter() {
+    glm::vec3 center = glm::vec3(0);
+    for (auto vertex : vertices) center += vertex.position;
+    center /= vertices.size();
+    
+    return center;
+}
+
+float Mesh::calculateVolume() {
+    glm::vec3 center = getCenter();
+    float volume = 0;
+    for (const auto triangle : triangles) volume += Util::tetrahedronVolume(triangle, center);
+
+    return volume;
+}
+float Mesh::calculateSurfaceArea() {
+    float area = 0;
+    for (const auto triangle : triangles) area += triangle.getArea();
+
+    return area;
 }

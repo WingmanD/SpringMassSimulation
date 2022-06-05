@@ -7,6 +7,7 @@
 #include <shobjidl.h>
 #include <glm/geometric.hpp>
 #include <glm/ext/matrix_transform.hpp>
+#include <glm/ext/quaternion_geometric.hpp>
 
 #include "Object.h"
 #include "SoftObject.h"
@@ -90,9 +91,9 @@ public:
 
         glm::vec3 rayDirection = glm::vec3(distribution(generator), distribution(generator), distribution(generator)) -
             point;
-        
+
         rayDirection = normalize(rayDirection);
-        
+
         int count = 0;
         for (const auto triangle : obj->mesh->triangles) {
             RayTriangleIntersectionResult result = rayTriangleIntersection(
@@ -131,7 +132,7 @@ public:
         float t = -(dot(n, rayOrigin) + D) / denominator;
         if (t < 0) return result;
         glm::vec3 intersection = rayOrigin + t * rayDirection;
-        
+
         // check if intersection is inside triangle
         e0 = triangle.v1->position - triangle.v0->position;
         glm::vec3 v0P = intersection - triangle.v0->position;
@@ -152,8 +153,13 @@ public:
 
         result.intersected = true;
         result.intersectionPoint = intersection;
-        
+
         return result;
+    }
+
+    static float tetrahedronVolume(const Triangle& triangle, const glm::vec3& top) {
+        return (1.0f / 6.0f) * glm::abs(dot(triangle.v0->position - top,
+                                            cross(triangle.v1->position - top, triangle.v2->position - top)));
     }
 
 };

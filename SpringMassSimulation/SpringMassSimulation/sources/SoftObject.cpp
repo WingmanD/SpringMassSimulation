@@ -37,8 +37,9 @@ void SoftObject::tick(double deltaTime) {
 
     for (int i = 0; i < mesh->vertices.size(); ++i) { mesh->vertices[i].position = particles[i]->position; }
 
+    // recalculate normals
     auto particle = particles.begin();
-    // for (const auto normal : mesh->calculateNormals()) (*particle++)->normal = normal;
+    for (const auto normal : mesh->calculateNormals()) (*particle++)->normal = normal;
 
 }
 
@@ -206,7 +207,7 @@ void SoftObject::setupParticles() {
 
     for (const auto& vertex : mesh->vertices)
         flatParticles.emplace_back(
-            Particle(vertex.position, vertex.normal, particleMass, &springConstant, &internalSpringConstant, &damping,
+            Particle(mesh, vertex.position, vertex.normal, particleMass, &springConstant, &internalSpringConstant, &damping,
                      &internalPressureForceConstant));
 
     for (int i = 0; i < flatParticles.size() - 1; i++)
@@ -214,12 +215,9 @@ void SoftObject::setupParticles() {
             flatParticles[i].
                 addConnected(&flatParticles[connected->index]);
 
-    auto center = glm::vec3(0.0f);
-    for (auto particle : flatParticles) center += particle.position;
-    center /= flatParticles.size();
-
-
-    flatParticles.emplace_back(Particle(center, {0, 0, 0}, particleMass, &springConstant, &internalSpringConstant,
+    auto center = mesh->getCenter();
+    
+    flatParticles.emplace_back(Particle(mesh, center, {0, 0, 0}, particleMass, &springConstant, &internalSpringConstant,
                                         &damping, &internalPressureForceConstant));
 
     auto centerParticle = &flatParticles.back();

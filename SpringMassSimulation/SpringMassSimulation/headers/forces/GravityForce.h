@@ -1,4 +1,6 @@
 #pragma once
+#include <glm/vec3.hpp>
+
 #include "forces/Force.h"
 
 class GravityForce : public Force {

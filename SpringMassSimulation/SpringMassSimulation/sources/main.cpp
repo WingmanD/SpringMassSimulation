@@ -35,7 +35,7 @@ float particleMass = 1.0f;
 float springConstant = 200.0f;
 float internalSpringConstant = 300.f;
 float damping = 5.0f;
-float internalPressureForceConstant = 5.0f;
+float internalPressureForceConstant = 0.01f;
 
 double deltaTime = 0.0;
 double lastFrame = 0.0;
@@ -183,9 +183,9 @@ int main(int argc, char* argv[]) {
     scene->load(path, defaultShader, false);
 
     p = R"(..\Debug\resources\cube\cube_up.obj)";
-    path = std::filesystem::absolute(p).string();
-    const auto colliderCube = scene->load(path, defaultShader, false);
-    colliderCube->material->setDiffuse({0.5f, 0.0f, 0.0f});
+    //path = std::filesystem::absolute(p).string();
+    //const auto colliderCube = scene->load(path, defaultShader, false);
+    //colliderCube->material->setDiffuse({0.5f, 0.0f, 0.0f});
 
     scene->objects[0]->bHasCollision = false;
 
@@ -222,7 +222,7 @@ int main(int argc, char* argv[]) {
         ImGui::SliderFloat("Spring constant", &springConstant, 0.0f, 1000.0f);
         ImGui::SliderFloat("Internal spring constant", &internalSpringConstant, 0.0f, 1000.0f);
         ImGui::SliderFloat("Damping", &damping, 0.0f, 10.0f);
-        ImGui::SliderFloat("Internal pressure force constant", &internalPressureForceConstant, 0.0f, 100.0f);
+        ImGui::SliderFloat("Internal pressure force constant", &internalPressureForceConstant, 0.0f, 1.0f);
 
         ImGui::SliderFloat3("Gravity", &gravityForce->gforce[0], -10.0f, 10.0f);
 

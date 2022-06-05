@@ -1,7 +1,8 @@
 ﻿#pragma once
-#include <map>
 #include <vector>
 #include <glm/vec3.hpp>
+
+#include "Mesh.h"
 
 class Particle {
     std::vector<std::pair<Particle*, float>>* initialDistancesToConnected = new std::vector<std::pair<
@@ -9,6 +10,7 @@ class Particle {
     std::vector<std::pair<Particle*, float>>* initialDistancesToInnerConnected = new std::vector<std::pair<
         Particle*, float>>();
 public:
+    Mesh* parentMesh;
     float mass;
     float* k;
     float* k_inner;
@@ -23,10 +25,11 @@ public:
     glm::vec3 force = {0, 0, 0};
 
 
-    Particle(glm::vec3 position, glm::vec3 initialNormal, float mass, float* outerSpringConstant,
+    Particle(Mesh* parentMesh, glm::vec3 position, glm::vec3 initialNormal, float mass, float* outerSpringConstant,
              float* innerSpringConstant, float* dampingConstant, float* pressureConstant):
-        mass(mass), k(outerSpringConstant), k_inner(innerSpringConstant), c(dampingConstant),
-        internalPressureConstant(pressureConstant), normal(initialNormal), position(position) { }
+        parentMesh(parentMesh), mass(mass), k(outerSpringConstant), k_inner(innerSpringConstant),
+        c(dampingConstant), internalPressureConstant(pressureConstant), normal(initialNormal),
+        position(position) { }
 
     void addConnected(Particle* connected);
     void addInnerConnected(Particle* innerConnected);
