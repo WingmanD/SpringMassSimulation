@@ -1,4 +1,5 @@
 #pragma once
+
 #include "Force.h"
 
 class RigidBodyCollisionForce : public Force {

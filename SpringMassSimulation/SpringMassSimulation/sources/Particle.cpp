@@ -18,29 +18,31 @@ void Particle::addInnerConnected(Particle* innerConnected) {
 
 void Particle::applyPhysics(float deltaTime) {
     calculateSpringForces();
-    calculateInternalPressureForce();
+    if (*internalPressureConstant > 0.00001f) calculateInternalPressureForce(parentMesh->calculateSurfaceArea(),
+                                                                      parentMesh->calculateVolume());
     calculateDampingForces();
     applyForce(deltaTime);
 }
 
 inline void Particle::calculateSpringForces() {
-    for (auto initDistConnected : *initialDistancesToConnected) {
-        const float deltaX = initDistConnected.second - distance(position, initDistConnected.first->position);
+    // calculate spring force that every neighbour applies on this particle
+    for (auto [connectedParticle, initialDistance] : *initialDistancesToConnected) {
+        const float deltaX = initialDistance - distance(position, connectedParticle->position);
         // Fs = k * deltaX * 0.5 where k is spring constant and deltaX is the difference between the initial distance and the current distance as vector
-        force += *k * deltaX * normalize(position - initDistConnected.first->position) * 0.5f;
+        force += *k * deltaX * normalize(position - connectedParticle->position) * 0.5f;
     }
-
-    for (auto initDistInnerConnected : *initialDistancesToInnerConnected) {
-        const float deltaX = initDistInnerConnected.second - distance(position, initDistInnerConnected.first->position);
+    
+    // calculate spring force that every inner particle applies on this particle
+    for (auto [connectedParticle, initialDistance] : *initialDistancesToInnerConnected) {
+        const float deltaX = initialDistance - distance(position, connectedParticle->position);
         // Fs = k * deltaX * 0.5 where k is spring constant and deltaX is the difference between the initial distance and the current distance as vector
-        force += *k_inner * deltaX * normalize(position - initDistInnerConnected.first->position) * 0.5f;
+        force += *k_inner * deltaX * normalize(position - connectedParticle->position) * 0.5f;
     }
 }
 
-inline void Particle::calculateInternalPressureForce() {
+inline void Particle::calculateInternalPressureForce(float meshSurfaceArea, float meshVolume) {
     // Fp = normal * SnRT / V
-    force += normal * parentMesh->calculateSurfaceArea() * *internalPressureConstant * R * T / parentMesh->
-        calculateVolume();
+    force += normal * meshSurfaceArea * *internalPressureConstant * R * T / meshVolume;
 }
 
 inline void Particle::calculateDampingForces() { force -= *c * velocity; }
@@ -49,9 +51,11 @@ inline void Particle::calculateDampingForces() { force -= *c * velocity; }
 void Particle::applyForce(float deltaTime) {
     // F = m * a
     // a = F / m
-    const glm::vec3 acceleration = force / mass;
+    const glm::vec3 acceleration = force / *mass;
     // v = v0 + a * t
     velocity += acceleration * deltaTime;
+    
+    // clamp velocity to 10
     if (length(velocity) > 10.0f)
         velocity = normalize(velocity) * 10.0f;
 

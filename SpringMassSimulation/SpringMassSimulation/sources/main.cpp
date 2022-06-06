@@ -6,7 +6,6 @@
 
 #include <assimp/Importer.hpp>
 #include <filesystem>
-#include <cstdlib>
 #include <future>
 
 #include "Shader.h"
@@ -32,8 +31,8 @@ Shader* defaultShader = nullptr;
 Shader* particleShader = nullptr;
 
 float particleMass = 1.0f;
-float springConstant = 200.0f;
-float internalSpringConstant = 300.f;
+float springConstant = 500.0f;
+float internalSpringConstant = 700.f;
 float damping = 5.0f;
 float internalPressureForceConstant = 0.01f;
 
@@ -71,6 +70,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
     }
     if (key == GLFW_KEY_O && action == GLFW_PRESS) {
         scene->loadSoft(Util::chooseOBJ());
+        // this ensures that delta time is not too large, which can cause issues with the simulation
         lastFrame = glfwGetTime();
     }
     if (key == GLFW_KEY_P && action == GLFW_PRESS) bPaused = !bPaused;
@@ -81,7 +81,6 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 }
 
 void processInput(GLFWwindow* window) {
-
     auto speed = static_cast<float>(2.5 * deltaTime);
     if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT)) speed *= 5.0f;
 
@@ -99,22 +98,19 @@ void mouse_callback(GLFWwindow* window, double x, double y) {
         lastY = y;
         firstMouse = false;
     }
-
     
-
     double xoffset = x - lastX;
     double yoffset = lastY - y;
 
     lastX = x;
     lastY = y;
 
-if (!cursorCaptured) return;
-    
+    if (!cursorCaptured) return;
+
     constexpr double sensitivity = 0.005;
     xoffset *= sensitivity;
     yoffset *= sensitivity;
 
-    //todo when cursor is not capured, camera can flip after we capture it
     activeCamera->rotate(glm::vec3(0, yoffset, xoffset));
 }
 
@@ -181,18 +177,20 @@ int main(int argc, char* argv[]) {
 
     scene = new Scene(activeCamera);
     scene->load(path, defaultShader, false);
-
-    p = R"(..\Debug\resources\cube\cube_up.obj)";
-    //path = std::filesystem::absolute(p).string();
-    //const auto colliderCube = scene->load(path, defaultShader, false);
-    //colliderCube->material->setDiffuse({0.5f, 0.0f, 0.0f});
-
     scene->objects[0]->bHasCollision = false;
+
+    // spawn an immovable box as a collider for soft bodies
+    // p = R"(..\Debug\resources\cube\cube_up.obj)";
+    // path = std::filesystem::absolute(p).string();
+    // const auto colliderCube = scene->load(path, defaultShader, false);
+    // colliderCube->material->setDiffuse({0.5f, 0.0f, 0.0f});
+
 
     scene->addLight(new DirectionalLight({-1, -1, -1}, {1, 1, 1}, 1));
 
     const auto gravityForce = new GravityForce(glm::vec3(0, -9.8, 0));
     scene->addForce(gravityForce);
+
     scene->addForce(new RigidBodyCollisionForce({0, 0, 0}, {0, 1, 0}));
 
     renderer = new Renderer(scene, camera);
@@ -219,10 +217,11 @@ int main(int argc, char* argv[]) {
                     static_cast<double>(ImGui::GetIO().Framerate));
         ImGui::Text("CTRL to release cursor");
         ImGui::Text("O to import .obj mesh");
+        ImGui::SliderFloat("Particle mass", &particleMass, 0.0f, 10.0f);
         ImGui::SliderFloat("Spring constant", &springConstant, 0.0f, 1000.0f);
         ImGui::SliderFloat("Internal spring constant", &internalSpringConstant, 0.0f, 1000.0f);
         ImGui::SliderFloat("Damping", &damping, 0.0f, 10.0f);
-        ImGui::SliderFloat("Internal pressure force constant", &internalPressureForceConstant, 0.0f, 1.0f);
+        ImGui::SliderFloat("Internal pressure force constant", &internalPressureForceConstant, 0.0f, 0.1f);
 
         ImGui::SliderFloat3("Gravity", &gravityForce->gforce[0], -10.0f, 10.0f);
 
@@ -236,6 +235,10 @@ int main(int argc, char* argv[]) {
 
         if (ImGui::Button("Play/Pause"))
             bPaused = !bPaused;
+
+        if (ImGui::Button("Remove Soft Objects")) {
+            erase_if(scene->objects, [](Object* o) { return dynamic_cast<SoftObject*>(o); });
+        }
 
         ImGui::End();
 
@@ -256,5 +259,5 @@ int main(int argc, char* argv[]) {
 
     glfwTerminate();
 
-    return EXIT_SUCCESS;
+    return 0;
 }

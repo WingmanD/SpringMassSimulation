@@ -1,4 +1,5 @@
 ﻿#pragma once
+
 #include "Transform.h"
 
 class DirectionalLight : public Transform {

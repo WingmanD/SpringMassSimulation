@@ -7,7 +7,7 @@
 #include "assimp/postprocess.h"
 #include "assimp/scene.h"
 
-void Scene::tick(double deltaTime) { for (auto& object : objects) { object->tick(deltaTime); } }
+void Scene::tick(double deltaTime) { for (const auto& object : objects) { object->tick(deltaTime); } }
 
 Object* Scene::load(std::string path, Shader* shader, bool bLoadMaterials) {
     if (path.empty()) return nullptr;

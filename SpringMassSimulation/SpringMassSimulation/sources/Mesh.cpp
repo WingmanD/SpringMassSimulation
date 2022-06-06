@@ -1,6 +1,5 @@
 #include "Mesh.h"
 
-#include <iostream>
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/gtx/vector_angle.hpp>
 
@@ -8,11 +7,11 @@
 #include "Util.h"
 
 Mesh::Mesh(aiMesh* const mesh) {
-    indices.reserve(mesh->mNumFaces * 3);
+    indices.reserve(3 * mesh->mNumFaces);
     vertices.reserve(mesh->mNumVertices);
     triangles.reserve(mesh->mNumFaces);
 
-    for (int i = 0; i < mesh->mNumVertices; i++) {
+    for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
         vertices.emplace_back(i, mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z);
         if (mesh->HasNormals())
             vertices[i].normal = glm::vec3(mesh->mNormals[i].x, mesh->mNormals[i].y,
@@ -22,9 +21,8 @@ Mesh::Mesh(aiMesh* const mesh) {
                                            mesh->mColors[0][i].b);
         }
     }
-
-
-    for (int i = 0; i < mesh->mNumFaces; i++) {
+    
+    for (unsigned int i = 0; i < mesh->mNumFaces; i++) {
         auto normal = glm::vec3(0);
         aiVector3D e1, e2;
 
@@ -54,7 +52,7 @@ Mesh::Mesh(aiMesh* const mesh) {
             vertices[mesh->mFaces[i].mIndices[2]].normal += normal;
         }
 
-        for (int j = 0; j < mesh->mFaces[i].mNumIndices; j++)
+        for (unsigned int j = 0; j < mesh->mFaces[i].mNumIndices; j++)
             indices.emplace_back(mesh->mFaces[i].mIndices[j]);
     }
 
@@ -97,7 +95,7 @@ BoundingBox Mesh::getModelSpaceBoundingBox() const {
     glm::vec3 min, max;
     min = max = vertices[0].position;
 
-    for (auto vertex : vertices) {
+    for (const auto& vertex : vertices) {
         if (vertex.position.x < min.x) { min.x = vertex.position.x; }
         if (vertex.position.y < min.y) { min.y = vertex.position.y; }
         if (vertex.position.z < min.z) { min.z = vertex.position.z; }
@@ -153,22 +151,22 @@ std::vector<glm::vec3> Mesh::calculateNormals() const {
     return normals;
 }
 
-glm::vec3 Mesh::getCenter() {
-    glm::vec3 center = glm::vec3(0);
-    for (auto vertex : vertices) center += vertex.position;
+glm::vec3 Mesh::getCenter() const {
+    auto center = glm::vec3(0);
+    for (const auto& vertex : vertices) center += vertex.position;
     center /= vertices.size();
     
     return center;
 }
 
-float Mesh::calculateVolume() {
-    glm::vec3 center = getCenter();
+float Mesh::calculateVolume() const {
+    const glm::vec3 center = getCenter();
     float volume = 0;
     for (const auto triangle : triangles) volume += Util::tetrahedronVolume(triangle, center);
 
     return volume;
 }
-float Mesh::calculateSurfaceArea() {
+float Mesh::calculateSurfaceArea() const {
     float area = 0;
     for (const auto triangle : triangles) area += triangle.getArea();
 

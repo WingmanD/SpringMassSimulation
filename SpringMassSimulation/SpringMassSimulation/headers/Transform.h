@@ -1,4 +1,5 @@
 #pragma once
+
 #include <glm/fwd.hpp>
 #include <glm/vec3.hpp>
 
@@ -14,6 +15,6 @@ public:
     void rotate(glm::vec3 eulerAngles) { Rotation += eulerAngles; }
     void scale(glm::vec3 factor) { Scale *= factor; }
 
-    glm::mat4 getModelMatrix() const;
-    glm::mat4 getViewMatrix() const;
+    [[nodiscard]] glm::mat4 getModelMatrix() const;
+    [[nodiscard]] glm::mat4 getViewMatrix() const;
 };

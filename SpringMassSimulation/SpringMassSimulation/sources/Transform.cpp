@@ -4,7 +4,7 @@
 
 glm::mat4 Transform::getModelMatrix() const {
     glm::mat4 model = glm::mat4(1.0f);
-    model = glm::translate(model, Location);
+    model = translate(model, Location);
     model = glm::rotate(model, Rotation.x, glm::vec3(1.0f, 0.0f, 0.0f));
     model = glm::rotate(model, Rotation.y, glm::vec3(0.0f, 1.0f, 0.0f));
     model = glm::rotate(model, Rotation.z, glm::vec3(0.0f, 0.0f, 1.0f));

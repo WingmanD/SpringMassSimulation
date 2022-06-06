@@ -1,4 +1,5 @@
 ﻿#pragma once
+
 #include <vector>
 #include <glm/vec3.hpp>
 
@@ -11,7 +12,7 @@ class Particle {
         Particle*, float>>();
 public:
     Mesh* parentMesh;
-    float mass;
+    float* mass;
     float* k;
     float* k_inner;
     float* c;
@@ -25,19 +26,23 @@ public:
     glm::vec3 force = {0, 0, 0};
 
 
-    Particle(Mesh* parentMesh, glm::vec3 position, glm::vec3 initialNormal, float mass, float* outerSpringConstant,
+    Particle(Mesh* parentMesh, glm::vec3 position, glm::vec3 initialNormal, float* mass, float* outerSpringConstant,
              float* innerSpringConstant, float* dampingConstant, float* pressureConstant):
         parentMesh(parentMesh), mass(mass), k(outerSpringConstant), k_inner(innerSpringConstant),
         c(dampingConstant), internalPressureConstant(pressureConstant), normal(initialNormal),
         position(position) { }
 
+    // 
     void addConnected(Particle* connected);
     void addInnerConnected(Particle* innerConnected);
 
+    // physics functions
+
+    
     void applyPhysics(float deltaTime);
 
     inline void calculateSpringForces();
-    inline void calculateInternalPressureForce();
+    inline void calculateInternalPressureForce(float meshSurfaceArea, float meshVolume);
     inline void calculateDampingForces();
 
     void applyForce(float deltaTime);

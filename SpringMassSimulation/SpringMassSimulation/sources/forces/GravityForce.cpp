@@ -2,7 +2,7 @@
 
 void GravityForce::apply(std::vector<Particle*> particles) {
     for (auto p : particles)
-        p->force += p->mass * gforce;
+        p->force += *p->mass * gforce;
 }
 
 void GravityForce::update() {}

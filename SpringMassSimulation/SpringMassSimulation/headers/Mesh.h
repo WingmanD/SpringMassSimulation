@@ -1,4 +1,5 @@
 #pragma once
+
 #include <vector>
 #include <glad/glad.h>
 #include <glm/geometric.hpp>
@@ -9,7 +10,6 @@
 #include "Camera.h"
 #include "Shader.h"
 #include "assimp/mesh.h"
-#include "Structs/BoundingBox.h"
 
 struct Vertex {
     int index = -1;
@@ -68,6 +68,9 @@ struct Triangle {
     }
 };
 
+struct BoundingBox {
+    glm::vec3 min, max;
+};
 
 class Mesh : public Transform {
     GLuint VAO{};
@@ -89,9 +92,9 @@ public:
     [[nodiscard]] GLuint getEBO() const { return EBO; }
     [[nodiscard]] std::vector<glm::vec3> calculateNormals() const;
 
-    glm::vec3 getCenter();
-    float calculateVolume();
-    float calculateSurfaceArea();
+    glm::vec3 getCenter() const;
+    float calculateVolume() const;
+    float calculateSurfaceArea() const;
 
     ~Mesh() {
         glDeleteBuffers(3, VBO);

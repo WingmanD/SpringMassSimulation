@@ -17,30 +17,21 @@ void SoftObject::drawSecondPass(Camera* camera, Transform instanceTransform, std
 
 void SoftObject::tick(double deltaTime) {
     Object::tick(deltaTime);
+    
+    for (const auto particle : particles) particle->applyPhysics(static_cast<float>(deltaTime));
 
-
-    /*for (auto particle : particles) particle->calculateSpringForces();
-
-    for (const auto value : particles)
-        std::cout << "springForce: " << value->force.x << " " << value->force.y << " " << value->
-            force.z << std::endl;*/
-
-    //todo check why calculateForces->applyEnvForces->applyPhysics does not work
-    for (auto particle : particles) particle->applyPhysics(static_cast<float>(deltaTime));
-
+    // collide with other objects
     //for (const auto object : *otherObjectsInScene) if (object->bHasCollision) collide(object);
 
+    // apply environment forces
     for (const auto envForce : *environmentForces) envForce->apply(particles);
-    /*for (const auto value : particles)
-        std::cout << "envForces: " << value->force.x << " " << value->force.y << " " << value->
-            force.z << std::endl;*/
 
+    // update vertex positions
     for (int i = 0; i < mesh->vertices.size(); ++i) { mesh->vertices[i].position = particles[i]->position; }
 
-    // recalculate normals
+    // recalculate normals for internal pressure force for next iteration
     auto particle = particles.begin();
     for (const auto normal : mesh->calculateNormals()) (*particle++)->normal = normal;
-
 }
 
 void SoftObject::appliedTranslate(glm::vec3 newLocation) {
@@ -51,7 +42,7 @@ void SoftObject::appliedTranslate(glm::vec3 newLocation) {
     const glm::vec3 offset = newLocation - center;
 
     for (auto& vertex : mesh->vertices) vertex.position += offset;
-    for (auto particle : particles) particle->position += offset;
+    for (const auto particle : particles) particle->position += offset;
 }
 
 void SoftObject::drawParticles(Camera* camera) const {
@@ -79,8 +70,7 @@ void SoftObject::drawParticles(Camera* camera) const {
 void SoftObject::collide(Object* object) const {
     if (object == this) return;
 
-    for (auto particle : particles) {
-        //if (particle != particles.front()) break;
+    for (const auto particle : particles) {
         float minAbsDistance = std::numeric_limits<float>::max();
         float minDistance = std::numeric_limits<float>::max();
         glm::vec3 closestNormal = glm::vec3(0);
@@ -88,8 +78,6 @@ void SoftObject::collide(Object* object) const {
         // find triangle that is closest to particle and particle is above or below it
         for (auto triangle : object->mesh->triangles) {
             auto normal = triangle.getPhysicalNormal();
-
-            //if (abs(dot(normal, particle->position - triangle.getCenter())) < 0.0001) continue;
 
             float D = -dot(triangle.v0->position, normal);
             float distance = dot(normal, particle->position) + D;
@@ -102,80 +90,20 @@ void SoftObject::collide(Object* object) const {
 
 
             const float threshold = 0.01f;
-            if (!(abs(abs(dot(n0, n1) + dot(n0, n2) + dot(n1, n2)) - 3) < threshold)) {
-                //std::cout << "outside" << std::endl;
-                continue;
-            }
-
-
-            /*glm::vec3 e1 = triangle.v2->position - triangle.v1->position;
-            glm::vec3 v1P = P - triangle.v1->position;
-            glm::vec3 C = cross(e1, v1P);
-            if (dot(C, normal) < 0) continue;
-
-            glm::vec3 e2 = triangle.v0->position - triangle.v2->position;
-            glm::vec3 v2P = P - triangle.v2->position;
-            C = cross(e2, v2P);
-            if (dot(C, normal) < 0) continue;*/
-
+            if (!(abs(abs(dot(n0, n1) + dot(n0, n2) + dot(n1, n2)) - 3) < threshold)) continue;
+            
             // particle is directly above or below the triangle (it's projection is inside the triangle) -> calculate possible collision
-
             float absDistance = abs(distance);
             if (absDistance < minAbsDistance) {
-                /*std::cout << "normals: " << n0.x << " " << n0.y << " " << n0.z << std::endl;
-                std::cout << "        " << n1.x << " " << n1.y << " " << n1.z << std::endl;
-                std::cout << "        " << n2.x << " " << n2.y << " " << n2.z << std::endl;
-                std::cout << "dot 01, 02, 12: " << dot(n0, n1) << " " << dot(n0, n2) << " " << dot(n1, n2) << std::endl;
-
-                std::cout << "particle position: " << particle->position.x << " " << particle->position.y << " " <<
-                    particle->position.z << std::endl;
-                std::cout << "projection: " << P.x << " " << P.y << " " << P.z << std::endl;
-                std::cout << "normal: " << normal.x << " " << normal.y << " " << normal.z << std::endl;
-                std::cout << "distance: " << distance << std::endl;
-                std::cout << "vertices: " << triangle.v0->position.x << " " << triangle.v0->position.y << " " <<
-                    triangle.v0->position.z << std::endl;
-                std::cout << "          " << triangle.v1->position.x << " " << triangle.v1->position.y << " " <<
-                    triangle.v1->position.z << std::endl;
-                std::cout << "          " << triangle.v2->position.x << " " << triangle.v2->position.y << " " <<
-                    triangle.v2->position.z << std::endl;
-                std::cout << "abs: " << abs(abs(dot(n0, n1) + dot(n0, n2) + dot(n1, n2)) - 3) << std::endl;
-                */
-
-
-                /*if ((dot(n0, n1) - 1.0f) > threshold || (dot(n0, n2) - 1.0f) > threshold || (dot(n1, n2) - 1.0f) >
-                    threshold) {
-                    std::cout << "outside" << std::endl;
-                    break;;
-                }*/
-                //std::cout << "INSIDE" << std::endl;
                 minAbsDistance = absDistance;
                 minDistance = distance;
                 closestNormal = normal;
-
-                /*std::cout << "projection: " << P.x << " " << P.y << " " << P.z << std::endl;
-                std::cout << "normal: " << normal.x << " " << normal.y << " " << normal.z << std::endl;
-                std::cout << "distance: " << distance << std::endl;
-                std::cout << "vertices: " << triangle.v0->position.x << " " << triangle.v0->position.y << " " <<
-                    triangle.v0->position.z << std::endl;
-                std::cout << "          " << triangle.v1->position.x << " " << triangle.v1->position.y << " " <<
-                    triangle.v1->position.z << std::endl;
-                std::cout << "          " << triangle.v2->position.x << " " << triangle.v2->position.y << " " <<
-                    triangle.v2->position.z << std::endl;
-
-                std::cout << "normals: " << n0.x << " " << n0.y << " " << n0.z << std::endl;
-                std::cout << "        " << n1.x << " " << n1.y << " " << n1.z << std::endl;
-                std::cout << "        " << n2.x << " " << n2.y << " " << n2.z << std::endl;*/
             }
         }
 
         particle->color = glm::vec3(1, 0, 0);
         // if particle is slightly above triangle -> add force to push it away
         if (minDistance > 0 && minDistance < 0.001f) {
-            /*std::cout << "collision distance: " << minDistance << " particle: " << particle->position.x << " " <<
-                particle->
-                position.y << " " << particle->position.z << " triangle normal: " << closestNormal.x << " " <<
-                closestNormal.y <<
-                " " << closestNormal.z << std::endl;*/
             float forceProjectionMagnitude = dot(particle->force, -closestNormal);
             particle->force += closestNormal * forceProjectionMagnitude * 0.5f;
 
@@ -193,8 +121,6 @@ void SoftObject::collide(Object* object) const {
                 particle->
                 position.z << std::endl;
             particle->position += closestNormal * -minDistance;
-            /*std::cout << "position after" << particle->position.x << " " << particle->position.y << " " << particle->
-                position.z << std::endl;*/
             particle->velocity = glm::vec3(0);
             break;
         }
@@ -202,31 +128,35 @@ void SoftObject::collide(Object* object) const {
 }
 
 void SoftObject::setupParticles() {
+    // flatParticles is just used for rendering
+    // particles is used for physics, it contains pointers to particles in flatParticles
     flatParticles.reserve(mesh->vertices.size() + 1);
     particles.reserve(mesh->vertices.size() + 1);
 
+    // for each vertex in mesh, create a particle
     for (const auto& vertex : mesh->vertices)
         flatParticles.emplace_back(
-            Particle(mesh, vertex.position, vertex.normal, particleMass, &springConstant, &internalSpringConstant, &damping,
+            Particle(mesh, vertex.position, vertex.normal, &particleMass, &springConstant, &internalSpringConstant, &damping,
                      &internalPressureForceConstant));
 
+    // for each vertex, find it's neighbours and link those particles
     for (int i = 0; i < flatParticles.size() - 1; i++)
         for (const auto connected : mesh->vertices[i].connected)
             flatParticles[i].
                 addConnected(&flatParticles[connected->index]);
 
+    // add a center particle
     auto center = mesh->getCenter();
-    
-    flatParticles.emplace_back(Particle(mesh, center, {0, 0, 0}, particleMass, &springConstant, &internalSpringConstant,
+    flatParticles.emplace_back(Particle(mesh, center, {0, 0, 0}, &particleMass, &springConstant, &internalSpringConstant,
                                         &damping, &internalPressureForceConstant));
-
     auto centerParticle = &flatParticles.back();
 
+    // connect the center particle to all other particles
     for (int i = 0; i < flatParticles.size() - 1; i++) {
         centerParticle->addConnected(&flatParticles[i]);
         flatParticles[i].addInnerConnected(centerParticle);
     }
-
+    // fill particles with pointers to particles in flatParticles
     for (auto& particle : flatParticles)
         particles.emplace_back(&particle);
 }
